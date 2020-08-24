@@ -1,0 +1,87 @@
+docker run -i --rm  --init --cidfile=/tmp/proc.517de6f98e6941b38853e6254dadfddd/locks/lock0/pid.871  -v /mnt/shared/user1/serverless-UMI:/data  -e awsdir=/data/.aws -e CLOUD_DIR=lambda_test/dtoxs/Aligns -e BUCKET=mybucketbio -e SPLIT_THREADS=1 -e SEQS_DIR=/data/lambda_test/dtoxs/Seqs -e OUTPUTDIR=/data/lambda_test/dtoxs/Aligns -e UPLOAD_THREADS=10 -e UPLOAD_THREADS_AFTER=16 -e NFILES=12 -e npairs=6 -e fastq_suffix=fastq.gz -e R1fastq_suffix=R1.fastq.gz -e R2fastq_suffix=R2.fastq.gz  biodepot/umisplit_awsupload:1.16.272__python_3.8.0__alpine-3.10__23ee1727 umisplit_awsupload.sh  -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f  -s 60000 -l 16 -q 10 -m 0 -d  -N 0 
+UPLOAD_THREADS_AFTER=16
+NWELLS=96
+HOSTNAME=9a8beaa4c441
+PYTHON_VERSION=3.8.0
+SEQS_DIR=/data/lambda_test/dtoxs/Seqs
+BUCKET=mybucketbio
+NFILES=12
+npairs=6
+R2fastq_suffix=R2.fastq.gz
+PWD=/
+awsdir=/data/.aws
+fastq_suffix=fastq.gz
+HOME=/root
+LANG=C.UTF-8
+UPLOAD_THREADS=10
+GPG_KEY=E3FF2839C048B25C084DEBE9B26995E310250568
+R1fastq_suffix=R1.fastq.gz
+SHLVL=1
+PYTHON_PIP_VERSION=19.3.1
+PYTHON_GET_PIP_SHA256=b86f36cc4345ae87bfd4f10ef6b2dbfa7a872fbff70608a1e43944d283fd0eee
+CLOUD_DIR=lambda_test/dtoxs/Aligns
+PYTHON_GET_PIP_URL=https://github.com/pypa/get-pip/raw/ffe826207a010164265d9cc807978e3604d18ca0/get-pip.py
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+OUTPUTDIR=/data/lambda_test/dtoxs/Aligns
+SPLIT_THREADS=1
+_=/bin/printenv
+nice runUploadSplitFiles.sh /data/lambda_test/dtoxs/Aligns 12 s3://mybucketbio/lambda_test/dtoxs/Aligns 10 16 &
+Mon Aug 24 06:44:55 UTC 2020
+find /data/lambda_test/dtoxs/Seqs -name *.fastq.gz
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane6_R1.fastq.gz
+RNAseq_20150409_Lane6_R1.fastq.gz RNAseq_20150409_Lane6_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane6_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane6_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane6_R1R2.log &
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane4_R1.fastq.gz
+RNAseq_20150409_Lane4_R1.fastq.gz RNAseq_20150409_Lane4_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane4_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane4_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane4_R1R2.log &
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane5_R1.fastq.gz
+RNAseq_20150409_Lane5_R1.fastq.gz RNAseq_20150409_Lane5_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane5_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane5_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane5_R1R2.log &
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane1_R1.fastq.gz
+RNAseq_20150409_Lane1_R1.fastq.gz RNAseq_20150409_Lane1_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane1_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane1_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane1_R1R2.log &
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane2_R1.fastq.gz
+RNAseq_20150409_Lane2_R1.fastq.gz RNAseq_20150409_Lane2_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane2_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane2_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane2_R1R2.log &
+/data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane3_R1.fastq.gz
+RNAseq_20150409_Lane3_R1.fastq.gz RNAseq_20150409_Lane3_ fastq.gz
+96/umisplit -t 1 -b /data/lambda_test/dtoxs/References/Broad_UMI/barcodes_trugrade_96_set4.dat -o /data/lambda_test/dtoxs/Aligns -f -s 60000 -l 16 -q 10 -m 0 -d -N 0 /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane3_R1.fastq.gz /data/lambda_test/dtoxs/Seqs/RNAseq_20150409_Lane3_R2.fastq.gz &> /data/lambda_test/dtoxs/Aligns/RNAseq_20150409_Lane3_R1R2.log &
+All 6 pairs begun splitting Mon Aug 24 06:44:55 UTC 2020
+waiting on 13
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+ls: /data/lambda_test/dtoxs/Aligns/*.done: No such file or directory
+found 0 files
+rm: cannot remove '/tmp/proc.517de6f98e6941b38853e6254dadfddd/locks/lock0/pid.871': No such file or directory
