@@ -4,65 +4,84 @@ awsdir=$1
 bucket=$2
 outputDir=$3
 
+error=0
 mkdir -p outputDir
-
 cp -r $awsdir/* /root/.aws
-if [ -z $nThreads ]; then 
-	if [ -z $DIRS ]; then
-		echo "no directories to download"
-	elif [ "$DIRS" == "[]" ]; then
-		echo "downloading the entire bucket $bucket"
-		echo aws s3 cp s3://$bucket $outputDir/. --recursive
-		aws s3 cp s3://"${bucket}" "${outputDir}/." --recursive
-	else
-		darray=( $(echo $DIRS | jq -r '.[]') )
-		if [ -z $darray ]; then
-			echo "cannot parse $DIRS"
-		else
-			for dir in "${darray[@]}"; do
-				echo "aws s3 cp s3://$bucket/$dir $outputDir/. --recursive"
-				aws s3 cp s3://"${bucket}"/"${dir}" "${outputDir}/." --recursive
-			done
-		fi
-	fi
-	if [ -z $FILES ]; then
-		echo "no files to download"
-	else
-		echo $FILES
-		farray=( $(echo $FILES | jq -r '.[]') )
-		for f in "${farray[@]}"; do
-			echo "aws s3 cp s3://$bucket/$f $outputDir/."
-			aws s3 cp s3://"${bucket}"/"${f}" "${outputDir}/."
-		done
-	fi
-else
-	if [ -z $DIRS ]; then
-		echo "no directories to download"
-	elif [ "$DIRS" == "[]" ]; then
-		echo "downloading the entire bucket $bucket"
-		#the "." will be substituted with an empty string inside the download_dir script
-		echo "download_dir_multithread.sh $outputDir $bucket . $nThreads"
-		download_dir_multithread.sh $outputDir $bucket . $nThreads
-	else
-		darray=( $(echo $DIRS | jq -r '.[]') )
-		if [ -z $darray ]; then
-			echo "cannot parse $DIRS"
-		else
-			for dir in "${darray[@]}"; do
-				echo "download_dir_multithread.sh $outputDir $bucket $dir $nThreads"
-				download_dir_multithread.sh $outputDir $bucket $dir $nThreads
-			done
-		fi
-	fi
-	if [ -z $FILES ]; then
-		echo "no files to download"
-	else
-		echo "download_files_multithread.sh $outputDir $bucket $nThreads"
-		download_files_multithread.sh $outputDir $bucket $nThreads
-	fi
+
+copy_wildcard(){
+ echo "parsing wildcards in $1"
+ local my_str=$1
+ #if there is no / then we search from the base bucket
+ local my_glob=""
+ local wildcard=$my_str
+ if [[ $glob == */* ]]; then
+	#split into a glob (directory) and wildcard string
+	no_wc="${my_str%%['!'@#\$%^\&*()+]*}"
+	my_glob="${no_wc%/*}"/
+	wildcard="${my_str#$my_glob}"
+ fi
+ command=(nice aws s3 cp --exclude "*" --include="$wildcard" --recursive s3://$bucket/$my_glob $outputDir)
+ echo "${command[@]}"
+ "${command[@]}"
+}
+
+copy_directory(){
+ echo "copying directory object $1"
+ command=(nice aws s3 cp --recursive s3://$bucket/$1 $outputDir)
+ echo "${command[@]}"
+ "${command[@]}"
+}
+
+copy_file(){
+ echo "copying file object $1"
+ destination=basename $1
+ command=(nice aws s3 cp s3://$bucket/$1 $outputDir/$dest) 
+ echo "${command[@]}"
+ "${command[@]}"
+}
+copy(){
+   local my_glob=$1
+   echo "$my_glob"
+   if [[ $my_glob == *['!'@#\$%^\&*()+]* ]]; then
+     copy_wildcard $my_glob || error=1
+   elif [ "${my_glob: -1}" == "/" ]; then
+     copy_directory $my_glob || error=1
+   else
+    copy_file $my_glob || error=1
+   fi	
+}
+multiCopy(){
+ lasti=$((${#globs[@]} - 1))
+ for i in $(seq 0 ${lasti}); do
+  if ( mkdir $lockDir/lock$i 2> /dev/null ); then
+   glob=${globs[i]}
+   echo "thread $1 copying $glob"
+   copy $glob
+  fi
+ done
+}
+if [ -z $DIRS ] || [ "$DIRS" == "[]" ]; then
+    echo "no bucket object given to download"
+	exit 1
 fi
-#echo ${FILES[@]}
-#copy credentials
-#cp -r $awsdir/* /root/.aws
-#download directory
-#aws s3 cp $uploadDir s3://$bucket/$s3Dir --recursive
+globs=( $(echo $DIRS | jq -r '.[]') )
+
+if [ -z $nThreads ] || (( $nThreads == 1 )) || (( $nThreads == 0 )); then
+	#use single thread
+	echo "Using single thread"
+	for glob in "${globs[@]}"; do
+		copy $glob
+	done
+else
+	lockDir=/tmp/locks.$$
+	mkdir -p $lockDir
+	for i in $(seq 2 $nThreads); do
+	  multiCopy $i &
+	done
+	multiCopy 1 &
+	wait
+	rm -rf $lockDir
+fi
+exit $error
+
+

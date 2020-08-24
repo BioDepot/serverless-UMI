@@ -17,10 +17,10 @@ class OWS3_upload(OWBwBWidget):
     priority = 10
     icon = getIconName(__file__,"cloud_upload.png")
     want_main_area = False
-    docker_image_name = "biodepot/s3download"
-    docker_image_tag = "1.16.272__python_3.8.0__alpine-3.10__23a85fd7"
-    inputs = [("Trigger",str,"handleInputsTrigger"),("awsdir",str,"handleInputsawsdir"),("bucket",str,"handleInputsbucket"),("downloadDir",str,"handleInputsdownloadDir")]
-    outputs = [("downloadDir",str)]
+    docker_image_name = "biodepot/s3upload"
+    docker_image_tag = "1.16.272__python_3.8.0__alpine-3.10__2cbb8076"
+    inputs = [("Trigger",str,"handleInputsTrigger"),("credentials_dir",str,"handleInputscredentials_dir"),("uploadDir",str,"handleInputsuploadDir"),("bucket",str,"handleInputsbucket"),("s3Dir",str,"handleInputss3Dir")]
+    outputs = [("credentials_dir",str)]
     pset=functools.partial(settings.Setting,schema_only=True)
     runMode=pset(0)
     exportGraphics=pset(False)
@@ -49,9 +49,14 @@ class OWS3_upload(OWBwBWidget):
             self.handleInputs("Trigger", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
-    def handleInputsawsdir(self, value, *args):
+    def handleInputscredentials_dir(self, value, *args):
         if args and len(args) > 0: 
-            self.handleInputs("awsdir", value, args[0][0], test=args[0][3])
+            self.handleInputs("credentials_dir", value, args[0][0], test=args[0][3])
+        else:
+            self.handleInputs("inputFile", value, None, False)
+    def handleInputsuploadDir(self, value, *args):
+        if args and len(args) > 0: 
+            self.handleInputs("uploadDir", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
     def handleInputsbucket(self, value, *args):
@@ -59,13 +64,13 @@ class OWS3_upload(OWBwBWidget):
             self.handleInputs("bucket", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
-    def handleInputsdownloadDir(self, value, *args):
+    def handleInputss3Dir(self, value, *args):
         if args and len(args) > 0: 
-            self.handleInputs("downloadDir", value, args[0][0], test=args[0][3])
+            self.handleInputs("s3Dir", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
     def handleOutputs(self):
         outputValue=None
-        if hasattr(self,"downloadDir"):
-            outputValue=getattr(self,"downloadDir")
-        self.send("downloadDir", outputValue)
+        if hasattr(self,"credentials_dir"):
+            outputValue=getattr(self,"credentials_dir")
+        self.send("credentials_dir", outputValue)

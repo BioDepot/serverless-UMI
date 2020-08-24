@@ -38,8 +38,9 @@ if [[ $DELETE_QUEUE ]]; then
 	qurl=$( aws sqs get-queue-url --queue-name $SUBSCRIPTION_NAME --region $FUNCTION_REGION| jq -r '."QueueUrl"' )
 	echo "queue url is $qurl"
 	echo "deleting queue"
-	echo "aws sqs delete-queue --queue-url $qurl"
-	aws sqs delete-queue --queue-url $qurl || ERROR=true
+	echo "aws sqs delete-queue --region $FUNCTION_REGION --queue-url $qurl"
+	#looks like it actually deletes it and then returns an error when it can't find it any more
+	aws sqs delete-queue --region $FUNCTION_REGION --queue-url $qurl
 fi
 if [[ $DELETE_ALIGN_FILES ]]; then
    echo "deleting alignment results on S3"
