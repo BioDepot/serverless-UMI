@@ -91,12 +91,19 @@ cp -r /mnt/data/serverless-UMI/AWS/RNA_seq_scripts /home/ubuntu/.
 chmod +x /home/ubuntu/RNA_seq_scripts/*
 sed -i "s/bucket=.*\"/bucket=\'${bucket}\'/" /home/ubuntu/RNA_seq_scripts/runAll.sh
 sed -i "s/bucket=.*\'/bucket=\'${bucket}\'/" /home/ubuntu/RNA_seq_scripts/runInvokeAWS.sh
+
+sed -i "s|dtoxstestbucket|${bucket}|g" /home/ubuntu/RNA_seq_scripts/cleanup_all.sh
+sed -i "s|dtoxstestbucket|${bucket}|g" /home/ubuntu/RNA_seq_scripts/cleanup_local.sh
+sed -i "s|dtoxstestbucket|${bucket}|g" /home/ubuntu/RNA_seq_scripts/cleanup_invoke.sh
+sed -i "s|dtoxstestbucket|${bucket}|g" /home/ubuntu/RNA_seq_scripts/cleanup.sh
+
+
+sed -i "s|dtoxsrole us-east-2|$role $region|g" /home/ubuntu/RNA_seq_scripts/cleanup.sh
+
 sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/runAll.sh
 sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/cleanup_all.sh
 sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/cleanup_local.sh
-sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/cleanup_warm.sh
 sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/cleanup.sh
-sed -i "s|lambda_test\/dtoxs|${base_glob}|g" /home/ubuntu/RNA_seq_scripts/runInvokeAWS.sh
 
 echo "setup is done"
 
