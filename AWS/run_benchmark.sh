@@ -104,5 +104,3 @@ echo "setup is done"
 echo "starting $nTrials benchmark runs"
 echo "cd /home/ubuntu/RNA_seq_scripts && ./runMany.sh $nTrials &> /mnt/data/runLog &"
 cd /home/ubuntu/RNA_seq_scripts && ./runMany.sh $nTrials &> /mnt/data/runLog &
-
-

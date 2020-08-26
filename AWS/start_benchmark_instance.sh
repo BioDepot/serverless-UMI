@@ -13,15 +13,14 @@ if [ -z $pemFile ] || [ -z $instance_ip ]; then
     exit 0
 fi
 if [ -z $credentials ]; then
-   echo "assuming credentials file is ~/.aws/credentials
-   credentials="~/.aws/credentials"
+   echo "assuming credentials file is ~/.aws/credentials"
+   credentials="$HOME/.aws/credentials"
 fi 
-
-echo "ssh -i $pemFile ubuntu@$ip 'mkdir -p /home/ubuntu/.aws'"
-ssh -i $pemFile ubuntu@$ip 'mkdir -p /home/ubuntu/.aws'
-echo "scp -i $pemFile $credentials ubuntu@$ip:.aws/credentials "
-scp -i $pemFile $credentials ubuntu@$ip:.aws/credentials
-echo "scp -i $pemFile run_benchmark.sh ubuntu@$ip:run_benchmark.sh"
-scp -i $pemFile run_benchmark.sh ubuntu@$ip:run_benchmark.sh
-echo "ssh -i $pemFile ubuntu@$ip 'run_benchmark.sh'"
-ssh -i $pemFile ubuntu@$ip 'run_benchmark.sh'
+echo "ssh -i $pemFile ubuntu@$instance_ip 'mkdir -p /home/ubuntu/.aws'"
+ssh -i $pemFile ubuntu@$instance_ip 'mkdir -p /home/ubuntu/.aws'
+echo "scp -i $pemFile $credentials ubuntu@$instance_ip:.aws/credentials "
+scp -i $pemFile $credentials ubuntu@$instance_ip:.aws/credentials
+echo "scp -i $pemFile run_benchmark.sh ubuntu@$instance_ip:run_benchmark.sh"
+scp -i $pemFile run_benchmark.sh ubuntu@$instance_ip:run_benchmark.sh
+echo "ssh -i $pemFile ubuntu@$instance_ip 'run_benchmark.sh  &> /mnt/data/benchmark_log &'"
+ssh -i $pemFile ubuntu@$instance_ip './run_benchmark.sh &> /mnt/data/benchmark_log &' 
