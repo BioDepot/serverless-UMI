@@ -18,7 +18,7 @@ class OWAlign(OWBwBWidget):
     icon = getIconName(__file__,"lambda_function.png")
     want_main_area = False
     docker_image_name = "biodepot/lambda_umi_align"
-    docker_image_tag = "1.16.272__python_3.8.0__alpine-3.10__a7510339"
+    docker_image_tag = "1.16.272__python_3.8.0__alpine-3.10__21ed7329"
     inputs = [("ExecTrigger",str,"handleInputsExecTrigger"),("DataTrigger",str,"handleInputsDataTrigger"),("RefTrigger",str,"handleInputsRefTrigger"),("DeployTrigger",str,"handleInputsDeployTrigger"),("credentials_dir",str,"handleInputscredentials_dir"),("bucket_name",str,"handleInputsbucket_name"),("region",str,"handleInputsregion"),("work_dir",str,"handleInputswork_dir"),("cloud_aligns_dir",str,"handleInputscloud_aligns_dir"),("function_name",str,"handleInputsfunction_name"),("topic_name",str,"handleInputstopic_name")]
     outputs = [("bucket_name",str),("credentials_dir",str),("topic_name",str),("recv_topic",str),("recv_subscription",str),("function_name",str),("work_dir",str)]
     pset=functools.partial(settings.Setting,schema_only=True)

@@ -208,28 +208,47 @@ def checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
     else:
         #sys.stderr.write("queue is empty\n")
         return False
-    
-def waitOnFunctions(splitFiles,bucket,startDir,finishDir,sqsclient,subscription_name,interval=1,startTimeout=20,finishTimeout=100):
+def waitOnFunctionsStart(splitFiles,bucket,startDir,finishDir,sqsclient,subscription_name,interval=1,startTimeout=20,finishTimeout=100):
     waitStartTime=timer()
-    unFinishedFiles=[]
-    while (not checkAllFunctionsStarted(splitFiles,bucket,startDir,finishDir) and (timer()-waitStartTime) <startTimeout):
+    unFinishedFiles=splitFiles
+    unStartedFiles=splitFiles
+    interval=10
+    intervalTime=timer()
+    while (not checkAllFunctionsStarted(unStartedFiles,bucket,startDir,finishDir) and (timer()-waitStartTime) <startTimeout):
         while checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
             pass
+        if(timer() -intervalTime > interval):
+            unStartedFiles=listFunctionsNotStarted(unStartedFiles,bucket,startDir,finishDir,verbose=False)
+            if unStartedFiles:
+                sys.stderr.write("{} of {} remaining functions unstarted at time {}\n".format(len(unStartedFiles),len(splitFiles),timer()-waitStartTime))
+            intervalTime=timer()
         time.sleep(1)
+    
     if checkAllFunctionsStarted(splitFiles,bucket,startDir,finishDir):
         sys.stderr.write("{} to start all {} functions\n".format(timer()-waitStartTime,len(splitFiles)))
-    else:
-        listFunctionsNotStarted(splitFiles,bucket,startDir,finishDir,verbose=False)
-    while (not checkAllFunctionsFinished(splitFiles,bucket,finishDir)):
+    unStartedFiles=listFunctionsNotStarted(splitFiles,bucket,startDir,finishDir,verbose=False)
+    return unStartedFiles
+
+def waitOnFunctionsFinish(splitFiles,bucket,startDir,finishDir,sqsclient,subscription_name,interval=1,startTimeout=20,finishTimeout=100):
+    waitFinishTime=timer()
+    unFinishedFiles=splitFiles
+    interval=10
+    intervalTime=timer()
+    while (not checkAllFunctionsFinished(unFinishedFiles,bucket,finishDir)):
         while checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
             pass
+        if(timer() -intervalTime > interval):
+            unFinishedFiles=listFunctionsNotFinished(unFinishedFiles,bucket,startDir,finishDir,verbose=False)
+            sys.stderr.write("{} of {} remaining functions at time {}\n".format(len(unFinishedFiles),len(splitFiles),timer()-waitFinishTime))
+            intervalTime=timer()
         time.sleep(1)
-    if checkAllFunctionsFinished(splitFiles,bucket,finishDir):
-        sys.stderr.write("{} to finish all {} functions\n".format(timer()-waitStartTime,len(splitFiles)))
-    else:
-        unFinishedFiles=listFunctionsNotFinished(splitFiles,bucket,startDir,finishDir,verbose=False)
+        time.sleep(1)
+    if checkAllFunctionsFinished(unFinishedFiles,bucket,finishDir):
+        sys.stderr.write("{} to finish all {} functions\n".format(timer()-waitFinishTime,len(splitFiles)))
+    
+    unFinishedFiles=listFunctionsNotFinished(unFinishedFiles,bucket,startDir,finishDir,verbose=False)
     return unFinishedFiles
-
+   
 def getSplitFilenames(bucket,baseDir,suffix):
     return getDirectoryFiles(bucket,baseDir,suffix)
 
@@ -246,7 +265,7 @@ def getFullSubscriptionName(subscription_name):
     arntokens=subscription_name.split(":")
     return "https://sqs.%s.amazonaws.com/%s/%s"%(arntokens[3],arntokens[4],arntokens[5])
         
-def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=16,bwa_string=None):
+def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=16,bwa_string=None,startSubDir="start"):
     sys.stderr.write("bucket is {}\n".format(bucket))
     sys.stderr.write("topicId is {}\n".format(topicId))
     sys.stderr.write("work_dir is {}\n".format(work_dir))
@@ -266,18 +285,39 @@ def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,
     splitFiles=getSplitFilenames(bucket,cloud_aligns_dir,suffix)
     start = timer()
     alignAttempts=0
+    startAttempts=0
     maxAlignAttempts=2
+    maxStartAttempts=2
     remainingSplitFiles=splitFiles
-    startDir=os.path.join(work_dir,"start")
+    startDir=os.path.join(work_dir,startSubDir)
     finishDir=os.path.join(work_dir,uploadDir)
     clearDirectoryFiles(bucket,startDir)
     clearDirectoryFiles(bucket,finishDir)
+    remainingStartFiles=splitFiles
+    remainingSplitFiles=splitFiles
+    while remainingStartFiles and startAttempts < maxStartAttempts:
+        startInvoke(work_dir,splitFiles,bucket,topicId,recv_topic,uploadDir,startTimes,region,max_workers,bwa_string)    
+        sys.stderr.write('Time elapsed for launch is {}\n'.format(timer()-start))
+        fullSubscriptionName=getFullSubscriptionName(subscription_name)
+        remainingStartFiles=waitOnFunctionsStart(remainingSplitFiles,bucket,startDir,finishDir,sqsclient,fullSubscriptionName,startTimeout=start_timeout,finishTimeout=finish_timeout)
+        startAttempts=startAttempts+1
+    if remainingStartFiles:
+        for startFile in remainingStartFiles:
+            sys.stderr.write("{} not started\n".format(startFile))
+    else:
+        sys.stderr.write('Time elapsed to start all Files is {}\n'.format(timer()-start))
+    remainingSplitFiles=listFunctionsNotFinished(splitFiles,bucket,startDir,finishDir,verbose=False)
     while remainingSplitFiles and alignAttempts < maxAlignAttempts:
         startInvoke(work_dir,splitFiles,bucket,topicId,recv_topic,uploadDir,startTimes,region,max_workers,bwa_string)    
         sys.stderr.write('Time elapsed for launch is {}\n'.format(timer()-start))
         fullSubscriptionName=getFullSubscriptionName(subscription_name)
-        remainingSplitFiles=waitOnFunctions(remainingSplitFiles,bucket,startDir,finishDir,sqsclient,fullSubscriptionName,startTimeout=start_timeout,finishTimeout=finish_timeout)
+        remainingSplitFiles=waitOnFunctionsFinish(remainingSplitFiles,bucket,startDir,finishDir,sqsclient,fullSubscriptionName,startTimeout=start_timeout,finishTimeout=finish_timeout)
         alignAttempts=alignAttempts+1
+    if remainingSplitFiles:
+        for splitFile in remainingSplitFiles:
+            sys.stderr.write("{} not finished\n".format(startFile))
+    else:
+        sys.stderr.write('Time elapsed to finish all Files is {}\n'.format(timer()-start))          
     #It is possible to finish but not have the files finish transferring
     while (not checkAllResultsTransferred(splitFiles,bucket,finishDir) and (timer()-start) < align_timeout):
         time.sleep(1)
@@ -317,4 +357,4 @@ if __name__ == "__main__":
     bwa_string=argv[14]
     
     
-    invokeFunctions(bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=max_workers,bwa_string=bwa_string)
+    invokeFunctions(bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=max_workers,bwa_string=bwa_string,startSubDir="start")
