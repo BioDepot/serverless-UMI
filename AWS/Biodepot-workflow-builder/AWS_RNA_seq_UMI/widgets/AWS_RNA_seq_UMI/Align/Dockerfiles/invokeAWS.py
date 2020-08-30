@@ -7,6 +7,7 @@ import sys
 import json
 import glob
 import boto3
+from botocore.errorfactory import ClientError
 import threading
 import re
 import pathlib
@@ -34,33 +35,37 @@ def findUnPublishedMessages(splitFiles):
     return output
 
 def clearDirectoryFiles(bucket,directory):
-    directory=os.path.normpath(directory+"/")
-    command="aws s3 rm s3://{}/{} --recursive ".format(bucket,directory)
+    #normpath strips last /
+    directory=os.path.normpath(directory)
+    s3 = boto3.resource('s3')
+    s3bucket = s3.Bucket(bucket)
+    for obj in s3bucket.objects.filter(Prefix=directory):
+        s3.Object(bucket,obj.key).delete()
     
 def getDirectoryFiles(bucket,directory,suffix=None):
-    #make sure that the directory has no double slash
-    directory=os.path.normpath(directory)
-    #check that directory exists
-    directory_command="aws s3 ls s3://{}/{} ".format(bucket,directory)
-    try:
-        output=subprocess.check_output(directory_command, shell=True)
-        if not output:
-            return []
-    except subprocess.CalledProcessError:
-        return []
-    if suffix:
-        command="aws s3 ls s3://{}/{}/ --recursive | tr -s ' ' | cut -d ' ' -f 4 | grep '.*{}$'".format(bucket,directory,suffix)
-    #    sys.stderr.write("getDirectoryFiles command is: {}\n".format(command))
+    #make sure that the directory has no double slash but ends in single dash
+    files=[]
+    directory=os.path.normpath(directory+"/")
+    s3 = boto3.resource('s3')
+    s3bucket= s3.Bucket(bucket)
+    if suffix == None:
+        for obj in s3bucket.objects.filter(Prefix=directory):
+            files.append(obj.key)
     else:
-        #grep gets rid of empty space because of header that aws inserts
-        #recursive does not need trailing slash
-        command="aws s3 ls s3://{}/{}/ --recursive | tr -s ' ' | cut -d ' ' -f 4 | grep -v '^[[:space:]]*$' ".format(bucket,directory)
-    #    sys.stderr.write("getDirectoryFiles command is: {}\n".format(command))
-    output=subprocess.check_output(command, shell=True)
-    if output:
-        return (output.decode()).splitlines()
-    return []
+        for obj in s3bucket.objects.filter(Prefix=directory):
+            filename=obj.key
+            if filename.endswith(suffix):
+                files.append(filename)
+    return files
     
+def getErrors(bucket,errorDir):
+    errorFiles=getDirectoryFiles(bucket,errorDir)
+    for errorFile in errorFiles:
+        errType=os.path.dirname(errorFile)
+        splitFile=os.path.basename(errorFile)
+        gErrors[splitFile]=errType
+    return len(errorFiles) != 0
+             
 def getBaseDirectoryFiles(bucket,directory,suffix=None):
     files=getDirectoryFiles(bucket,directory,suffix)
     baseFiles=[]
@@ -78,7 +83,15 @@ def checkFinishFiles(splitFiles,baseFinishFiles):
     for splitFile in splitFiles:
         if not checkFinishFile(splitFile,baseFinishFiles):
             return False
-
+            
+def object_present(bucket,path):
+    s3 = boto3.client('s3')
+    try:
+        s3.head_object(Bucket=bucket, Key=path)
+        return True
+    except ClientError:
+        return False
+        
 def checkAllFunctionsStarted(splitFiles,bucketName,startDir,finishDir):
     startFiles=getBaseDirectoryFiles(bucketName,startDir)
     finishFiles=getBaseDirectoryFiles(bucketName,finishDir)
@@ -176,38 +189,7 @@ def listFunctionsNotTransferred(splitFiles,bucketName,startDir,finishDir,verbose
     sys.stderr.write("{} of {} results transferred \n".format(nFinished,len(splitFiles)))   
     return unFinishedFiles
 
-def checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
-    response=sqsclient.receive_message(QueueUrl=subscription_name,MessageAttributeNames=[],MaxNumberOfMessages=maxMessages)
-    if "Messages" in response:
-        delete_messages=[]
-        for msg in response["Messages"]:
-            msgBody=json.loads(msg["Body"])
-            filename=msgBody["MessageAttributes"]["filename"]["Value"]
-            Id=msg["MessageId"]
-            handle=msg["ReceiptHandle"]
-            message=msgBody["Message"]
-            timestamp=msgBody["Timestamp"]
-            if message == "Start":
-                gfunctionStartTimes[filename]=parse(timestamp)
-                gsplitFileSeen[filename]=True
-            elif message == "Finish":
-                gfunctionFinishTimes[filename]=parse(timestamp)
-                gsplitFileSeen[filename]=True
-            elif message and isinstance(message,str) and message[0:5] == "Error":
-                gErrors[filename] = message
-            delete_messages.append({
-                'Id': Id,
-                'ReceiptHandle': handle
-            })
-        if delete_messages:
-            delete_response = sqsclient.delete_message_batch(
-                QueueUrl=subscription_name,
-                Entries=delete_messages
-            )
-        return True
-    else:
-        #sys.stderr.write("queue is empty\n")
-        return False
+
 def waitOnFunctionsStart(splitFiles,bucket,startDir,finishDir,sqsclient,subscription_name,interval=1,startTimeout=20,finishTimeout=100):
     waitStartTime=timer()
     unFinishedFiles=splitFiles
@@ -215,8 +197,6 @@ def waitOnFunctionsStart(splitFiles,bucket,startDir,finishDir,sqsclient,subscrip
     interval=10
     intervalTime=timer()
     while (not checkAllFunctionsStarted(unStartedFiles,bucket,startDir,finishDir) and (timer()-waitStartTime) <startTimeout):
-        while checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
-            pass
         if(timer() -intervalTime > interval):
             unStartedFiles=listFunctionsNotStarted(unStartedFiles,bucket,startDir,finishDir,verbose=False)
             if unStartedFiles:
@@ -235,8 +215,6 @@ def waitOnFunctionsFinish(splitFiles,bucket,startDir,finishDir,sqsclient,subscri
     interval=10
     intervalTime=timer()
     while (not checkAllFunctionsFinished(unFinishedFiles,bucket,finishDir)):
-        while checkMessagesInQueue(sqsclient,subscription_name,interval=1,maxMessages=10):
-            pass
         if(timer() -intervalTime > interval):
             unFinishedFiles=listFunctionsNotFinished(unFinishedFiles,bucket,startDir,finishDir,verbose=False)
             sys.stderr.write("{} of {} remaining functions at time {}\n".format(len(unFinishedFiles),len(splitFiles),timer()-waitFinishTime))
@@ -264,7 +242,11 @@ def startInvoke(baseDir,splitFiles,bucket,topicId,recv_topic,uploadDir,startTime
 def getFullSubscriptionName(subscription_name):
     arntokens=subscription_name.split(":")
     return "https://sqs.%s.amazonaws.com/%s/%s"%(arntokens[3],arntokens[4],arntokens[5])
-        
+
+def cleanStart(bucket, startDir, finishDir, errorDir):
+    for path in [startDir, finishDir, errorDir]:
+        clearDirectoryFiles(bucket,path)        
+
 def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=16,bwa_string=None,startSubDir="start"):
     sys.stderr.write("bucket is {}\n".format(bucket))
     sys.stderr.write("topicId is {}\n".format(topicId))
@@ -291,21 +273,24 @@ def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,
     remainingSplitFiles=splitFiles
     startDir=os.path.join(work_dir,startSubDir)
     finishDir=os.path.join(work_dir,uploadDir)
+    errorDir=os.path.join(work_dir,"error")
     clearDirectoryFiles(bucket,startDir)
     clearDirectoryFiles(bucket,finishDir)
     remainingStartFiles=splitFiles
     remainingSplitFiles=splitFiles
+    
+    cleanStart(bucket,startDir,finishDir,errorDir)
     while remainingStartFiles and startAttempts < maxStartAttempts:
         startInvoke(work_dir,splitFiles,bucket,topicId,recv_topic,uploadDir,startTimes,region,max_workers,bwa_string)    
         sys.stderr.write('Time elapsed for launch is {}\n'.format(timer()-start))
         fullSubscriptionName=getFullSubscriptionName(subscription_name)
         remainingStartFiles=waitOnFunctionsStart(remainingSplitFiles,bucket,startDir,finishDir,sqsclient,fullSubscriptionName,startTimeout=start_timeout,finishTimeout=finish_timeout)
         startAttempts=startAttempts+1
-    if remainingStartFiles:
-        for startFile in remainingStartFiles:
-            sys.stderr.write("{} not started\n".format(startFile))
-    else:
-        sys.stderr.write('Time elapsed to start all Files is {}\n'.format(timer()-start))
+        if remainingStartFiles:
+            for startFile in remainingStartFiles:
+                sys.stderr.write("{} not started\n".format(startFile))
+        else:
+            sys.stderr.write('Time elapsed to start all Files is {}\n'.format(timer()-start))
     remainingSplitFiles=listFunctionsNotFinished(splitFiles,bucket,startDir,finishDir,verbose=False)
     while remainingSplitFiles and alignAttempts < maxAlignAttempts:
         startInvoke(work_dir,splitFiles,bucket,topicId,recv_topic,uploadDir,startTimes,region,max_workers,bwa_string)    
@@ -313,11 +298,11 @@ def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,
         fullSubscriptionName=getFullSubscriptionName(subscription_name)
         remainingSplitFiles=waitOnFunctionsFinish(remainingSplitFiles,bucket,startDir,finishDir,sqsclient,fullSubscriptionName,startTimeout=start_timeout,finishTimeout=finish_timeout)
         alignAttempts=alignAttempts+1
-    if remainingSplitFiles:
-        for splitFile in remainingSplitFiles:
-            sys.stderr.write("{} not finished\n".format(startFile))
-    else:
-        sys.stderr.write('Time elapsed to finish all Files is {}\n'.format(timer()-start))          
+        if remainingSplitFiles:
+            for splitFile in remainingSplitFiles:
+                sys.stderr.write("{} not finished\n".format(startFile))
+        else:
+            sys.stderr.write('Time elapsed to finish all Files is {}\n'.format(timer()-start))          
     #It is possible to finish but not have the files finish transferring
     while (not checkAllResultsTransferred(splitFiles,bucket,finishDir) and (timer()-start) < align_timeout):
         time.sleep(1)
@@ -333,7 +318,8 @@ def invokeFunctions (bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,
         sys.stderr.write("Did not finish {}\n".format(remainingSplitFile))
     for splitFile in splitFiles:
         if splitFile in gErrors:
-            sys.stderr.write("Error for {} - {}\n".format(splitFile,gErrors['splitFile']))
+            sys.stderr.write("Error for {} - {}\n".format(splitFile,gErrors[splitFile]))
+    getErrors(bucket,errorDir)
     if gErrors:
         sys.stderr.write("errors {}\n".format(gErrors))
         raise Exception ("Errors detected during the alignment phase")
@@ -355,6 +341,5 @@ if __name__ == "__main__":
     start_timeout=argv[12]
     finish_timeout=argv[13]
     bwa_string=argv[14]
-    
     
     invokeFunctions(bucket,topicId,work_dir,cloud_aligns_dir,recv_topic,suffix,uploadDir,subscription_name,region,align_timeout,start_timeout,finish_timeout,max_workers=max_workers,bwa_string=bwa_string,startSubDir="start")

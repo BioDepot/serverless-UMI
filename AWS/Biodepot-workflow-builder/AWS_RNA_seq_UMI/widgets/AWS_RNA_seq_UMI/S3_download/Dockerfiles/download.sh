@@ -11,6 +11,7 @@ cp -r $awsdir/* /root/.aws
 copy_wildcard(){
  echo "parsing wildcards in $1"
  local my_str=$1
+ local max_attempts=4
  #if there is no / then we search from the base bucket
  local my_glob=""
  local wildcard=$my_str
@@ -20,25 +21,47 @@ copy_wildcard(){
 	my_glob="${no_wc%/*}"/
 	wildcard="${my_str#$my_glob}"
  fi
- command=(nice aws s3 cp --exclude "*" --include="$wildcard" --recursive s3://$bucket/$my_glob $outputDir)
- echo "${command[@]}"
- "${command[@]}"
+ local command=(nice aws s3 cp --exclude "*" --include="$wildcard" --recursive s3://$bucket/$my_glob $outputDir)
+ local attempts
+ for attempts in {1..$max_attempts}; do
+	echo "${command[@]}"
+ 	if "${command[@]}" ; then
+   	return
+ 	fi
+ done
+ echo "error in ${command[@]}"
+ exit 1
+
 }
 
 copy_directory(){
  echo "copying directory object $1"
- command=(nice aws s3 cp --recursive s3://$bucket/$1 $outputDir)
- echo "${command[@]}"
- "${command[@]}"
+ local attempts
+ for attempts in {1..$max_attempts}; do
+	echo "${command[@]}"
+ 	if "${command[@]}" ; then
+   	return
+ 	fi
+ done
+ echo "error in ${command[@]}"
+ exit 1
+
 }
 
 copy_file(){
  echo "copying file object $1"
  destination=basename $1
- command=(nice aws s3 cp s3://$bucket/$1 $outputDir/$dest) 
- echo "${command[@]}"
- "${command[@]}"
+ local command=(nice aws s3 cp s3://$bucket/$1 $outputDir/$dest) 
+ for attempts in {1..$max_attempts}; do
+	echo "${command[@]}"
+ 	if "${command[@]}" ; then
+   	return
+ 	fi
+ done
+ echo "error in ${command[@]}"
+ exit 1
 }
+
 copy(){
    local my_glob=$1
    echo "$my_glob"
@@ -50,6 +73,7 @@ copy(){
     copy_file $my_glob || error=1
    fi	
 }
+
 multiCopy(){
  lasti=$((${#globs[@]} - 1))
  for i in $(seq 0 ${lasti}); do
@@ -83,5 +107,3 @@ else
 	rm -rf $lockDir
 fi
 exit $error
-
-
