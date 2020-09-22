@@ -50,6 +50,9 @@ if [[ $DELETE_ALIGN_FILES ]]; then
    aws s3 rm "s3://$BUCKET_NAME/$WORK_DIR/saf" --recursive  || ERROR=true
    echo "rm -rf $LOCAL_WORK_DIR/saf"
    rm -rf $LOCAL_WORK_DIR/saf
+   rm -rf $LOCAL_WORK_DIR/Counts/*.dat
+   rm -rf $LOCAL_WORK_DIR/Results/FDR*
+
 fi
 
 if [[ $DELETE_SPLIT_FILES ]]; then

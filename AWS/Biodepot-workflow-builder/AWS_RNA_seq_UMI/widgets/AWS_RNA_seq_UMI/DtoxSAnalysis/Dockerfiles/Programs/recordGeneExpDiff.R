@@ -113,11 +113,11 @@ recordGeneExpDiff <- function(group_pair, deg_read_counts, targets_state1, group
     top_read_counts <- deg_read_counts_group_pair_sorted[1:n_top,]
     # Remove FDR and Regulation columns.
     field_names <- colnames(top_read_counts)
-    field_names <- field_names[field_names!="FDR"&field_names!="Regulation"]
+    #field_names <- field_names[field_names!="FDR"&field_names!="Regulation"]
     top_read_counts <- top_read_counts[,field_names]
     top_names <- rownames(top_read_counts)
     # Save the DEG statistics of current plate of current cell line of current drug group.
-    top_states_names <- data.frame(Cell=rep(cell_line,n_top), Plate=rep(plate,n_top), Condition1=rep(group_pair[1],n_top), Condition2=rep(group_pair[2],n_top), Gene=top_names, logFC=top_read_counts[top_names,"logFC"], logCPM=top_read_counts[top_names,"logCPM"], PValue=top_read_counts[top_names,"PValue"], stringsAsFactors=FALSE)
+    top_states_names <- data.frame(Cell=rep(cell_line,n_top), Plate=rep(plate,n_top), Condition1=rep(group_pair[1],n_top), Condition2=rep(group_pair[2],n_top), Gene=top_names, logFC=top_read_counts[top_names,"logFC"], logCPM=top_read_counts[top_names,"logCPM"], PValue=top_read_counts[top_names,"PValue"], FDRValue=top_read_counts[top_names,"FDR"],stringsAsFactors=FALSE)
     # Save DEG statistics of top-ranked genes.
     if(!is.null(top_stats_file))
     {
