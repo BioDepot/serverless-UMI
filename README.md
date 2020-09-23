@@ -20,7 +20,9 @@ This document summarizes steps (with detailed screenshots) required to manually 
 
 ### II. Get AWS Access Key Pair
 
-Click on “Create New Access Key” and your key pair will be created. 
+1. Go to My Security Credentials ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/aws5.png)
+2. Click on Create New Access Key and your key pair will be created ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/aws6.png)
+3. This is the last chance you can record Secret Access Key. Either download to save it or record it somewhere ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/aws7.png)
 
 ### III. Create Google Cloud Account 
 
