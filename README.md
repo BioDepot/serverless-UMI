@@ -40,3 +40,10 @@ This document summarizes steps (with detailed screenshots) required to manually 
 12. Personal information and finish ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp11.jpg)
 
 ### IV. Get Google Cloud Key Pair
+
+1. Switch to a project ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp14.png)
+2. Add service account ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp15.png)
+3. Create account ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp16.png)
+4. Add permission ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp17.png)
+5. Create key as json file ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp18.png)
+6. Download and save the key file ![image](https://github.com/BioDepot/serverless-UMI/raw/master/img/gcp19.png)
