@@ -13,7 +13,7 @@ docker pull biodepot/bwb-umi:latest
 ```
 #### Start Bwb-umi
 
-#### Warning: 130 GB of disk space are needed to run the workflow
+##### Warning: 130 GB of disk space are needed to run the workflow
 
 Navigate to a directory that you have at least 130 GB of disk space.
 
@@ -68,7 +68,7 @@ Similarly the function name must be something unique or a function name that you
 
 Finally, the region that you specify should match your default region on your AWS account
 
-##### Optionally, change other start parameters
+#### Optionally, change other start parameters
 
 Of the parameters, for the demo you can keep all of them or modify them if you wish to change the path where the results will be stored. The /data directory in Bwb points to the directory that you started Bwb or /c:/users if you are using Windows. Just make sure that if you want to store things in a sub-directory of /data you change the entire set of paths to be consistent.
 
@@ -76,4 +76,25 @@ Remember that you need 130 GB of disk space to store all the fastq files and sha
 
 #### Starting the workflow
 
-Press start button at the bottom of the start icon to start the workflow. 
+Press start button at the bottom of the start icon to start the workflow.
+
+You should immediately see the Create-storage, Download-data and widgets' states change to Running. If an error occurs - you can stop the widgets by double-clicking on them and clicking the stop button.
+
+The Create-widget should finish in less than a minute and then the Split-and-upload widget will start running.
+ 
+The Download-data widget must download 46GB of data so can take some time until it finishes depending on your internet connection. The Split-and-upload step will also depend on the internet connection as it needs to upload about 80 GB of data. On a cloud instance  these steps can take as little as 4 minutes and only need to be done the first time.
+
+The Align step can also take some time to 
+
+ When the workflow is completed, a spreadsheet window will pop up with the top-40 genes for the 15 experiments.
+
+#### Reanalysis with different alignment parameters
+
+First, if you want,  save the top 40 results using the spreadsheet menu to a file under the /data mountpoint which will be a local directory. The stop the widget by pressing the stop button or by quitting the spreadsheet.
+
+Then double click on Cleanup cloud widget. The "Delete cloud alignment files" box should be checked. Leave the other boxes unchecked and click on the Start button. 
+
+When the cleanup is finished, double doubleclick on the Align widget and then choose the Optional entries tab to bring up all the options that can be modified. Once the parameters have been entered, click on the start button to reanalyze the data. The reanalysis should be much faster than the original analysis as the fastq download, sharding and upload steps are not needed. 
+
+#### Cleanup
+When you are finished, double-click on the Cleanup cloud icon to delete any or all resources created by the workflow.

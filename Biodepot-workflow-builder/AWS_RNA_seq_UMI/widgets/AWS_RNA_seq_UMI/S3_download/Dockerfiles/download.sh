@@ -37,6 +37,8 @@ copy_wildcard(){
 copy_directory(){
  echo "copying directory object $1"
  local attempts
+ local max_attempts=2
+ local command=(nice aws s3 cp --recursive s3://$bucket/$1 $outputDir/$dest) 
  for attempts in {1..$max_attempts}; do
 	echo "${command[@]}"
  	if "${command[@]}" ; then
@@ -51,6 +53,8 @@ copy_directory(){
 copy_file(){
  echo "copying file object $1"
  destination=basename $1
+ local attempts
+ local max_attempts=2
  local command=(nice aws s3 cp s3://$bucket/$1 $outputDir/$dest) 
  for attempts in {1..$max_attempts}; do
 	echo "${command[@]}"
