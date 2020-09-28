@@ -30,10 +30,10 @@ def get_callback(f, data,futures,dataHash):
             sys.stderr.write("Invoke error for {} for {}\n".format(f.exception(), data))
     return callback
 
-def publish(publisher,topic_path,message,splitFile,bucketName,baseDir,recv,uploadDir,project_id,futures):
+def publish(publisher,topic_path,message,splitFile,bucketName,baseDir,recv,uploadDir,project_id,bwa_string,futures):
     data = base64.b64encode(message)
     # When you publish a message, the client returns a future.
-    future=publisher.publish(topic_path,data,splitFile=splitFile,bucketName=bucketName,baseDirectory=baseDir,recv=recv,uploadDir=uploadDir,project_id=project_id)
+    future=publisher.publish(topic_path,data,splitFile=splitFile,bucketName=bucketName,baseDirectory=baseDir,recv=recv,uploadDir=uploadDir,project_id=project_id,bwa_string=bwa_string)
     futures[splitFile]=future
     future.add_done_callback(get_callback(future, splitFile,futures,gmessagePublished))
 
@@ -364,7 +364,7 @@ def createTopic(publisher,project_id,topic_id):
         sys.stderr.write("topic {} already exists\n".format(topic_id))
     return topic_path
            
-def startInvoke(project_id,work_dir,alignsDir,splitFiles,bucket,topicId,recv_topic,uploadDir,max_workers,maxAttempts=2,clearQueue=True):
+def startInvoke(project_id,work_dir,alignsDir,splitFiles,bucket,topicId,recv_topic,uploadDir,bwa_string,max_workers,maxAttempts=2,clearQueue=True):
     fullUploadDir=os.path.join(work_dir,uploadDir)
     #create client to read/write to pubsub queue 
     batch_settings = pubsub.types.BatchSettings(max_bytes=1024, max_latency=1)
@@ -390,16 +390,14 @@ def startInvoke(project_id,work_dir,alignsDir,splitFiles,bucket,topicId,recv_top
         sys.stderr.write("invoking with {} workers\n".format(max_workers))
         invokeFutures={}
         with concurrent.futures.ThreadPoolExecutor(max_workers=int(max_workers)) as executor:
-            future={executor.submit(publish,publisher,topic_path,b"start",splitFile,bucket,work_dir,recv_topic,fullUploadDir,project_id,invokeFutures): splitFile for splitFile in mySplitFiles}
+            future={executor.submit(publish,publisher,topic_path,b"start",splitFile,bucket,work_dir,recv_topic,fullUploadDir,project_id,bwa_string,invokeFutures): splitFile for splitFile in mySplitFiles}
         waitOnMessages(invokeFutures,publishTimeout)
         mySplitFiles=findUnPublishedMessages(mySplitFiles)
         attempts=attempts+1
     sys.stderr.write("Time to publish messages {}\n".format(timer()-publishStartTime))
     return mySplitFiles
-    
-
-    
-def invokeFunctions (bucket,topicId,work_dir,alignsDir,recv_topic,suffix,uploadDir,project_id,max_workers,startTimeout,finishTiemout):
+       
+def invokeFunctions (bucket,topicId,work_dir,aligns_dir,recv_topic,suffix,uploadDir,project_id,max_workers,startTimeout,finishTimeout,bwa_string="bwa aln "):
     sys.stderr.write("bucket is {}\n".format(bucket))
     sys.stderr.write("topicId is {}\n".format(topicId))
     sys.stderr.write("work_dir is {}\n".format(work_dir))
@@ -411,10 +409,11 @@ def invokeFunctions (bucket,topicId,work_dir,alignsDir,recv_topic,suffix,uploadD
     sys.stderr.write("max_workers is {}\n".format(max_workers))
     sys.stderr.write("start timeout is {}\n".format(startTimeout))
     sys.stderr.write("finish timeout is {}\n".format(finishTimeout))
+    sys.stderr.write("bwa string is {}\n".format(bwa_string))
     finishTimes={}
     startTimes={}
     splitFiles=getSplitFilenames(bucket,work_dir,aligns_dir,suffix)
-    splitFiles=splitFiles
+    #splitFiles=splitFiles[0:2]
     start = timer()
     maxStartAttempts=2
     maxAlignAttempts=2
@@ -423,24 +422,24 @@ def invokeFunctions (bucket,topicId,work_dir,alignsDir,recv_topic,suffix,uploadD
     sys.stderr.write("Working on files {}\n".format(splitFiles))
     startFiles=splitFiles
     while startFiles and startAttempts < maxStartAttempts:
-        unqueuedFiles=startInvoke(project_id,work_dir,alignsDir,startFiles,bucket,topicId,recv_topic,uploadDir,max_workers,clearQueue=(startAttempts==0))
+        unqueuedFiles=startInvoke(project_id,work_dir,aligns_dir,startFiles,bucket,topicId,recv_topic,uploadDir,bwa_string,max_workers,clearQueue=(startAttempts==0))
         if unqueuedFiles:
             sys.stderr.write("unable to put {} onto the start message queue\n".format(unqueuedFiles))
         sys.stderr.write('Time elapsed for launch is {}\n'.format(timer()-start))
-        startFiles=waitOnFunctionsStart(startFiles,recv_topic,project_id,bucket,topicId, work_dir,alignsDir,uploadDir,startTimeout,finishTimeout)
+        startFiles=waitOnFunctionsStart(startFiles,recv_topic,project_id,bucket,topicId, work_dir,aligns_dir,uploadDir,startTimeout,finishTimeout)
         startAttempts=startAttempts+1
     while splitFiles and alignAttempts < maxAlignAttempts:
         if alignAttempts > 0:
-            unqueuedFiles=startInvoke(project_id,work_dir,alignsDir,splitFiles,bucket,topicId,recv_topic,uploadDir,max_workers,clearQueue=False)
+            unqueuedFiles=startInvoke(project_id,work_dir,aligns_dir,splitFiles,bucket,topicId,recv_topic,uploadDir,bwa_string,max_workers,clearQueue=False)
             if unqueuedFiles:
                 sys.stderr.write("unable to put {} onto the start message queue\n".format(unqueuedFiles))
         sys.stderr.write('Time elapsed for launch is {}\n'.format(timer()-start))
-        splitFiles=waitOnFunctionsFinish(splitFiles,recv_topic,project_id,bucket,topicId, work_dir,alignsDir,uploadDir,startTimeout,finishTimeout)
+        splitFiles=waitOnFunctionsFinish(splitFiles,recv_topic,project_id,bucket,topicId, work_dir,aligns_dir,uploadDir,startTimeout,finishTimeout)
         alignAttempts=alignAttempts+1                
     sys.stderr.write('Time elapsed for align is {}\n'.format(timer()-start))
 
 if __name__ == "__main__":
-    if len(sys.argv) != 13:
+    if len(sys.argv) != 14:
         sys.stderr.write("missing argument\n")
         raise
     bucket=sys.argv[1]
@@ -455,6 +454,7 @@ if __name__ == "__main__":
     credentials_file=sys.argv[10]
     startTimeout=int(sys.argv[11])
     finishTimeout=int(sys.argv[12])
+    bwa_string=int(sys.argv[13])
     
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_file
-    invokeFunctions(bucket,topicId,work_dir,aligns_dir,recv_topic,suffix,uploadDir,project_id,max_workers,startTimeout,finishTimeout)
+    invokeFunctions(bucket,topicId,work_dir,aligns_dir,recv_topic,suffix,uploadDir,project_id,max_workers,startTimeout,finishTimeout,bwa_string=bwa_string)

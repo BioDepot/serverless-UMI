@@ -13,12 +13,12 @@ from PyQt5 import QtWidgets, QtGui
 
 class OWAlign(OWBwBWidget):
     name = "Align"
-    description = "Launch align using google functions"
+    description = "Setup and launch lambda functions"
     priority = 10
     icon = getIconName(__file__,"google_function.png")
     want_main_area = False
     docker_image_name = "biodepot/gcpalign"
-    docker_image_tag = "python_3.8.0__alpine_3.10__f4f5c526"
+    docker_image_tag = "test"
     inputs = [("ExecTrigger",str,"handleInputsExecTrigger"),("DataTrigger",str,"handleInputsDataTrigger"),("RefTrigger",str,"handleInputsRefTrigger"),("DeployTrigger",str,"handleInputsDeployTrigger"),("credentials_file",str,"handleInputscredentials_file"),("bucket_name",str,"handleInputsbucket_name"),("project_id",str,"handleInputsproject_id"),("upload_dir",str,"handleInputsupload_dir"),("work_dir",str,"handleInputswork_dir"),("aligns_dir",str,"handleInputsaligns_dir"),("topic_name",str,"handleInputstopic_name")]
     outputs = [("bucket_name",str),("credentials_file",str),("topic_name",str),("recv_topic",str),("work_dir",str),("upload_dir",str)]
     pset=functools.partial(settings.Setting,schema_only=True)
@@ -28,18 +28,35 @@ class OWAlign(OWBwBWidget):
     triggerReady=pset({})
     inputConnectionsStore=pset({})
     optionsChecked=pset({})
-    bucket_name=pset("dtoxbucket")
-    topic_name=pset("dtoxpubsub")
-    work_dir=pset("dtoxdir")
-    aligns_dir=pset(None)
-    recv_topic=pset("dtoxrecv")
+    bucket_name=pset("gcpdtoxsbucket")
+    topic_name=pset("gcpdtoxspubsub")
+    work_dir=pset("dtoxsdir")
+    aligns_dir=pset("")
+    recv_topic=pset("dtoxsrecv")
     fastq_suffix=pset("fq")
     upload_dir=pset("saf")
     project_id=pset("serverless_user_123")
     max_workers=pset(16)
+    start_timeout=pset(600)
+    align_timeout=pset(1000)
+    finish_timeout=pset(900)
     credentials_file=pset("/data/credentials.json")
-    start_timeout=pset(540)
-    finish_timeout=pset(600)
+    bwa_n=pset("0.04")
+    bwa_o=pset(1)
+    bwa_e=pset(-1)
+    bwa_i=pset(5)
+    bwa_d=pset(10)
+    bwa_l=pset(32)
+    bwa_k=pset(2)
+    bwa_m=pset(2000000)
+    bwa_t=pset(1)
+    bwa_M=pset(3)
+    bwa_O=pset(11)
+    bwa_E=pset(4)
+    bwa_R=pset(20)
+    bwa_q=pset(0)
+    bwa_L=pset(False)
+    bwa_N=pset(False)
     def __init__(self):
         super().__init__(self.docker_image_name, self.docker_image_tag)
         with open(getJsonName(__file__,"Align")) as f:
