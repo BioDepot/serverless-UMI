@@ -19,7 +19,7 @@ class OWCleanup(OWBwBWidget):
     want_main_area = False
     docker_image_name = "biodepot/gcpclean"
     docker_image_tag = "277.0.0-alpine__23220efc"
-    inputs = [("bucket_name",str,"handleInputsbucket_name"),("credentials_dir",str,"handleInputscredentials_dir"),("topic_name",str,"handleInputstopic_name"),("recv_topic",str,"handleInputsrecv_topic"),("function_name",str,"handleInputsfunction_name"),("work_dir",str,"handleInputswork_dir"),("Trigger",str,"handleInputsTrigger"),("local_work_dir",str,"handleInputslocal_work_dir"),("cloud_split_dir",str,"handleInputscloud_split_dir")]
+    inputs = [("bucket_name",str,"handleInputsbucket_name"),("credentials_file",str,"handleInputscredentials_file"),("topic_name",str,"handleInputstopic_name"),("recv_topic",str,"handleInputsrecv_topic"),("function_name",str,"handleInputsfunction_name"),("work_dir",str,"handleInputswork_dir"),("Trigger",str,"handleInputsTrigger"),("local_work_dir",str,"handleInputslocal_work_dir"),("cloud_split_dir",str,"handleInputscloud_split_dir")]
     outputs = [("credentials_dir",str)]
     pset=functools.partial(settings.Setting,schema_only=True)
     runMode=pset(0)
@@ -56,9 +56,9 @@ class OWCleanup(OWBwBWidget):
             self.handleInputs("bucket_name", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
-    def handleInputscredentials_dir(self, value, *args):
+    def handleInputscredentials_file(self, value, *args):
         if args and len(args) > 0: 
-            self.handleInputs("credentials_dir", value, args[0][0], test=args[0][3])
+            self.handleInputs("credentials_file", value, args[0][0], test=args[0][3])
         else:
             self.handleInputs("inputFile", value, None, False)
     def handleInputstopic_name(self, value, *args):

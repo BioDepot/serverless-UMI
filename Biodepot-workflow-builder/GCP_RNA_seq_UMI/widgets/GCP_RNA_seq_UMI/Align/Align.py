@@ -18,7 +18,7 @@ class OWAlign(OWBwBWidget):
     icon = getIconName(__file__,"google_function.png")
     want_main_area = False
     docker_image_name = "biodepot/gcpalign"
-    docker_image_tag = "test"
+    docker_image_tag = "python_3.8.0__alpine_3.10__3eac364c"
     inputs = [("ExecTrigger",str,"handleInputsExecTrigger"),("DataTrigger",str,"handleInputsDataTrigger"),("RefTrigger",str,"handleInputsRefTrigger"),("DeployTrigger",str,"handleInputsDeployTrigger"),("credentials_file",str,"handleInputscredentials_file"),("bucket_name",str,"handleInputsbucket_name"),("project_id",str,"handleInputsproject_id"),("upload_dir",str,"handleInputsupload_dir"),("work_dir",str,"handleInputswork_dir"),("aligns_dir",str,"handleInputsaligns_dir"),("topic_name",str,"handleInputstopic_name")]
     outputs = [("bucket_name",str),("credentials_file",str),("topic_name",str),("recv_topic",str),("work_dir",str),("upload_dir",str)]
     pset=functools.partial(settings.Setting,schema_only=True)

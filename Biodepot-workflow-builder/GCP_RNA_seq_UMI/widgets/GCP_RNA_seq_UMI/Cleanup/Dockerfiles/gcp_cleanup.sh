@@ -20,7 +20,7 @@ if [[ $DELETE_FUNCTION ]]; then
 	gcloud functions delete --quiet $FUNCTION_NAME || echo "unable to delete $FUNCTION_NAME"
 fi
 if [[ $DELETE_QUEUE ]]; then
-	echo "deleting pubsub subscriptions"
+	echo "deleting pubsub subscriptions topics $TOPIC $RTOPIC"
 	deleteSub $TOPIC
 	deleteSub $RTOPIC
 	echo "deleting pubsub topics"
