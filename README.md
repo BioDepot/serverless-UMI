@@ -2,7 +2,8 @@
 
 This repository contains software and instructions to run a serverless RNA-seq  UMI pipeline described in [Accessible and interactive RNA sequencing analysis using serverless computing](https://www.biorxiv.org/content/10.1101/576199v2)
 
-The executable graphical front-end for the serverless workflows is found in the [Biodepot-workflow builder subdirectory](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder). A [README file](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder/README.md) in the subdirectory gives instructions on how to run the software.
+The executable graphical front-end for the serverless workflows is found in the [Biodepot-workflow builder subdirectory](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder). A [README file](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder/README.md) in the subdirectory gives instructions on how to run the software. A 7 minute youtube video is available: [here](https://youtu.be/WHb_lQv3Y8Y)
+
 
 Code used to benchmark the AWS and Google code are in the corresponding subdirectories.
 
