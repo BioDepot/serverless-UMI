@@ -1,6 +1,12 @@
 # Rapid RNA sequencing data analysis using serverless computing
 
-This document summarizes steps (with detailed screenshots) required to manually set up the RNA-seq serverless pipeline on Amazon Web Services (AWS).  Following these steps for the first time could take a couple of hours even for a technical user. Our graphical frontend using the BioDepot-workflow-builder (Bwb) allows users to skip most of these steps, thus enhances the accessibility of the latest cloud computing platforms for biomedical scientists. 
+This repository contains software and instructions to run a serverless RNA-seq  UMI pipeline described in [Accessible and interactive RNA sequencing analysis using serverless computing](https://www.biorxiv.org/content/10.1101/576199v2)
+
+The executable graphical front-end for the serverless workflows is found in the [Biodepot-workflow builder subdirectory](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder). A [README file](https://github.com/BioDepot/serverless-UMI/tree/master/Biodepot-workflow-builder/README.md) in the subdirectory gives instructions on how to run the software.
+
+Code used to benchmark the AWS and Google code are in the corresponding subdirectories.
+
+To run these workflows, the user must have an AWS or GCP account and obtain a set of key pairs for authentication. Instructions on how to obtain these credentails follow:
 
 - AWS Platform
   - [Create AWS Account](https://github.com/BioDepot/serverless-UMI#i-create-aws-account)
