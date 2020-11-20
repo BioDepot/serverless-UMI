@@ -1,7 +1,15 @@
 # Biodepot serverless RNA-seq workflow
 
+
 ## Instructions for workflow
 
+#### Hardware requirements for workflow
+
+- 130 GB free disk space on the working directory
+- 16 GB free disk space on the system directory
+
+We recommend running this workflow on a cloud instance or a server with a good internet connection. For AWS, the system volume should be set to 20 GB in size at least. The working volume (can be the same as the system volume) should have at least 130 GB. The alignment is done by the serverless instances so the effect so the workflow can run on fairly small instances. However, the demux and reduction steps are done on the client, and both steps benefit from more threads and better disks. For maximum performance we recommend an AWS C5 fa or z1 series instance with an SSD attached or a GCP C2 instance.  
+ 
 #### YouTube video
 
 A 7 minute YouTube video, which shows the basic operation for the AWS workflow, is available: [https://youtu.be/WHb_lQv3Y8Y](https://youtu.be/WHb_lQv3Y8Y) 
@@ -48,11 +56,11 @@ Make sure the latest version is present
 Open a terminal and type:
 
 ```
-docker pull biodepot/bwb-umi:latest
+sudo docker pull biodepot/bwb-umi:latest
 ```
 #### Start Bwb-umi
 
-##### Warning: 130 GB of disk space are needed to run the workflow
+##### Warning: 130 GB of disk space in the directory where Bwb is launched is needed to run the workflow. In addition there needs to be about 16 GB of free space on the system disk
 
 Navigate to a directory that you have at least 130 GB of disk space.
 
@@ -64,11 +72,11 @@ cp -r original_directory/.aws .
 Then type into the terminal: 
 
 ```
-docker run --rm  -p 6080:6080 -v ${PWD}/:/data -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/.X11-unix:/tmp/.X11-unix --privileged --group-add root biodepot/bwb-umi 
+sudo docker run --rm  -p 6080:6080 -v ${PWD}/:/data -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/.X11-unix:/tmp/.X11-unix --privileged --group-add root biodepot/bwb-umi 
 ```
 If you are running an older version of Docker that uses boot2docker then type:
 ```
-docker run --rm  -p 6080:6080 -v /c/users/:/data -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/.X11-unix:/tmp/.X11-unix --privileged --group-add root biodepot/bwb-umi 
+sudo docker run --rm  -p 6080:6080 -v /c/users/:/data -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/.X11-unix:/tmp/.X11-unix --privileged --group-add root biodepot/bwb-umi 
 ```
 
 #### Connect using a browser
@@ -154,7 +162,7 @@ Remember that you need 130 GB of disk space to store all the fastq files and sha
 Double-click on the blue *Start* widget in the lower right corner of the canvas.
 Press the blue *Start* button at the bottom left of the window that pops up to start the workflow.
 
-You should immediately see the *Create bucket* and *Download data* widgets' states change to *Running*. If an error occurs - you can stop the widgets by double-clicking on them and clicking the stop button. Check out the [video](https://youtu.be/WHb_lQv3Y8Y) to see how the workflow should progress.
+You should immediately see the *Create storage* and *Download data* widgets' states change to *Running*. If an error occurs - you can stop the widgets by double-clicking on them and clicking the stop button. Check out the [video](https://youtu.be/WHb_lQv3Y8Y) to see how the workflow should progress.
  
 The *Download data* widget must download 46 GB of data so can take some time until it finishes depending on your internet connection. The *Split-and-upload* step will also depend on the internet connection as it needs to upload about 80 GB of data. On a cloud instance  these steps can take as little as 4 minutes and only need to be done the first time.
 
