@@ -2,16 +2,16 @@
 © 2018-2020
 
 Redistribution and use for noncommercial purposes in source and binary forms, with or without
-modification, are permiNed provided that the following condi=ons are met:
+modification, are permitted provided that the following conditions are met:
 
 1. The software is used solely for noncommercial purposes. It may not be used indirectly for commercial
 use, such as on a website that accepts advertising money for content. Noncommercial use does include
 use by a for-profit company in its research. For commercial use rights, contact lhhunghimself@gmail about the project.
 
-2. Redistribu=ons of source code must retain the above copyright no=ce, this list of conditions and the
+2. Redistributions of source code must retain the above copyright notice, this list of conditions and the
 following disclaimer.
 
-3. Redistribu=ons in binary form must reproduce the above copyright notice, this list of conditions and
+3. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and
 the following disclaimer in the documentation and/or other materials provided with the distribution.
 
 4. Neither the name of the University of Washington nor the names of its contributors may be used to
