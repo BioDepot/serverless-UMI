@@ -176,7 +176,7 @@ When the workflow is completed, a spreadsheet window will pop up with the top-40
 
 #### Reanalysis with different alignment parameters
 
-First, if you want, save the top 40 results using the spreadsheet menu to a file under the */data* mountpoint which will be a local directory. The stop the widget by pressing the stop button or by quitting the spreadsheet.
+First, if you want, save the top 40 results using the spreadsheet menu to a file under the */data* mountpoint which will be a local directory. Then stop the widget by pressing the stop button or by quitting the spreadsheet.
 
 Then double click on *Cleanup* cloud widget. The *Delete cloud alignment files* box should be checked. Leave the other boxes unchecked and click on the *Start* button. 
 
